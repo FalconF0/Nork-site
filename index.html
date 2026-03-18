@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قاعدة بيانات العصابات - Life</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+body, html { margin:0; padding:0; font-family:'Share Tech Mono', monospace; overflow-x:hidden; background:#000; color:#f0f0f0; }
+#background { position: fixed; top:0; left:0; width:100%; height:100%; background: url('https://media.discordapp.net/attachments/1481727552455311603/1483550631447891978/background.jpg') center/cover no-repeat; z-index: -2; filter: brightness(0.3); }
+header { text-align:center; padding:30px 10px; font-size:32px; color:#d98cff; text-shadow:0 0 20px #b44cff; }
+#searchIcon { position:fixed; top:25px; right:25px; width:40px; height:40px; background:#b44cff; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:999; box-shadow:0 0 10px #ffbaff; }
+#logIcon { position:fixed; top:25px; left:25px; width:40px; height:40px; background:#b44cff; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:999; box-shadow:0 0 10px #ffbaff; }
+#searchInput { position:fixed; top:25px; right:75px; padding:8px 12px; border-radius:8px; border:2px solid #b44cff; background:#2a002a; color:#fff; display:none; z-index:999; width:220px; }
+.gang-container { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:15px; }
+.gang-card { width:280px; background: rgba(50,0,50,0.8); border:1px solid #d98cff; border-radius:15px; padding:12px; cursor:pointer; box-shadow:0 0 15px rgba(217,140,255,0.6); transition:0.3s; }
+.gang-card:hover { transform: translateY(-7px); box-shadow:0 0 28px rgba(217,140,255,0.9);}
+.gang-card img { width:100%; height:150px; object-fit:cover; border-radius:10px; border:2px solid #d98cff; }
+.gang-card h2 { color:#ffbaff; margin:8px 0 4px; }
+#dashboard { position:fixed; bottom:0; left:0; width:100%; background:rgba(30,0,30,0.95); padding:15px; display:none; border-top:3px solid #b44cff; z-index:998; }
+#dashboard h3 { margin:0 0 8px; color:#ffbaff; }
+#dashboard textarea { width:100%; border-radius:6px; border:1px solid #333; background:#2a002a; color:#fff; padding:6px; margin-bottom:6px; }
+#dashboard button, #addGangBtn, #closeFormBtn { padding:10px 15px; border:none; border-radius:8px; cursor:pointer; margin:4px 4px 6px 0; font-weight:bold; }
+#editBtn { background:#b44cff;color:#fff; }
+#deleteBtn { background:#550055;color:#fff; }
+#addNoteBtn { background:#ff80ff;color:#000; }
+#sendDiscordBtn { background:#6a0dad;color:#fff; }
+#addGangBtn { display:block;margin:10px auto;background:#b44cff;color:#fff; box-shadow:0 0 14px rgba(180,76,255,0.6); }
+#overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:900; }
+#gangForm { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background: rgba(50,0,50,0.95); padding:20px; border-radius:15px; border:2px solid #b44cff; z-index:1000; width:300px; }
+#gangForm input, #gangForm textarea { width:100%; margin-bottom:10px; padding:8px; border-radius:6px; border:1px solid #333; background:#2a002a; color:#fff; }
+#gangForm label { display:block; font-size:14px; margin-bottom:4px; }
+#closeFormBtn, #closeDashboardBtn { float:right; background:#550055;color:#fff;padding:4px 8px; cursor:pointer; border-radius:6px; border:none; margin-bottom:10px; font-weight:bold; }
+#logContainer { display:none; position:fixed; top:70px; left:10px; width:300px; max-height:400px; overflow-y:auto; background:rgba(50,0,50,0.95); border:2px solid #b44cff; border-radius:10px; padding:10px; z-index:997; }
+</style>
+</head>
+<body>
+<div id="background"></div>
+<header>قاعدة بيانات العصابات - Life</header>
+<button id="addGangBtn">إضافة عصابة جديدة</button>
+<div id="searchIcon">🔍</div>
+<input type="text" id="searchInput" placeholder="ابحث عن العصابة...">
+<div id="logIcon">📜</div>
+<div class="gang-container" id="gangContainer"></div>
+<div id="dashboard">
+<button id="closeDashboardBtn">✖</button>
+<h3 id="dashName"></h3>
+<p>Boss: <span id="dashBoss"></span></p>
+<p>Co Boss: <span id="dashCoBoss"></span></p>
+<p>Members: <span id="dashMembers"></span></p>
+<p>Active: <span id="dashActivity"></span></p>
+<ul id="dashNotes"></ul>
+<textarea id="newNote" placeholder="أكتب ملاحظة جديدة"></textarea><br>
+<button id="addNoteBtn">أضف ملاحظة</button>
+<button id="editBtn">تعديل</button>
+<button id="deleteBtn">حذف</button>
+<button id="sendDiscordBtn">أرسل إلى Discord</button>
+</div>
+<div id="gangForm">
+<button id="closeFormBtn">✖</button>
+<h3>اضافة / تعديل العصابة</h3>
+<label>اسم العصابة</label><input type="text" id="gangName">
+<label>Boss</label><input type="text" id="bossName">
+<label>Co Boss</label><input type="text" id="coBossName">
+<label>Members (افصل بفواصل)</label><textarea id="members"></textarea>
+<label>Active</label><input type="text" id="activity">
+<label>رابط صورة العصابة</label><input type="text" id="imageUrl">
+<button id="saveGangBtn">حفظ</button>
+</div>
+<div id="logContainer"></div>
+<script>
+const gangContainer=document.getElementById('gangContainer');
+const dashboard=document.getElementById('dashboard');
+const dashName=document.getElementById('dashName');
+const dashBoss=document.getElementById('dashBoss');
+const dashCoBoss=document.getElementById('dashCoBoss');
+const dashMembers=document.getElementById('dashMembers');
+const dashActivity=document.getElementById('dashActivity');
+const dashNotes=document.getElementById('dashNotes');
+const newNote=document.getElementById('newNote');
+const addNoteBtn=document.getElementById('addNoteBtn');
+const editBtn=document.getElementById('editBtn');
+const deleteBtn=document.getElementById('deleteBtn');
+const sendDiscordBtn=document.getElementById('sendDiscordBtn');
+const addGangBtn=document.getElementById('addGangBtn');
+const gangForm=document.getElementById('gangForm');
+const closeFormBtn=document.getElementById('closeFormBtn');
+const saveGangBtn=document.getElementById('saveGangBtn');
+const overlay=document.createElement('div');
+overlay.style.cssText="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:900;";
+document.body.appendChild(overlay);
+const searchInput=document.getElementById('searchInput');
+const searchIcon=document.getElementById('searchIcon');
+const logContainer=document.getElementById('logContainer');
+const logIcon=document.getElementById('logIcon');
+const logWebhook="https://discord.com/api/webhooks/1483564619028238446/rEj4hssQUmVAAisA4XhVnqyqyTJC107sAy-uG0xFgeGdmnNQA13xZUcjExmo_S95rMQq";
+let logs=JSON.parse(localStorage.getItem('logs'))||[];
+let gangs=JSON.parse(localStorage.getItem('gangs'))||[];
+let currentCard=null;
+function addLog(msg){const time=`[${new Date().toLocaleTimeString()}] `;const fullMsg=time+msg;logs.push(fullMsg);localStorage.setItem('logs',JSON.stringify(logs));renderLogs();fetch(logWebhook,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content:fullMsg})}).catch(e=>console.error(e));}
+function renderLogs(){logContainer.innerHTML='';logs.slice().reverse().forEach(l=>{const div=document.createElement('div');div.textContent=l;logContainer.appendChild(div);});}
+function renderGang(data){const card=document.createElement('div');card.classList.add('gang-card');card.dataset.id=data.id;card.dataset.name=data.name;card.dataset.boss=data.boss;card.dataset.coBoss=data.coBoss;card.dataset.members=data.members;card.dataset.activity=data.activity;card.dataset.img=data.img;card.dataset.notes=JSON.stringify(data.notes||[]);card.innerHTML=`<img src="${data.img}" alt="${data.name}"><h2>${data.name}</h2>`;card.addEventListener('click',()=>openDashboard(card));gangContainer.appendChild(card);}
+function saveGangs(){localStorage.setItem('gangs',JSON.stringify(gangs));}
+function openDashboard(card){currentCard=card;dashboard.style.display='block';dashName.textContent=card.dataset.name;dashBoss.textContent=card.dataset.boss;dashCoBoss.textContent=card.dataset.coBoss;dashMembers.textContent=card.dataset.members;dashActivity.textContent=card.dataset.activity;dashNotes.innerHTML='';JSON.parse(card.dataset.notes).forEach(n=>{const li=document.createElement('li');li.textContent=n;dashNotes.appendChild(li);});}
+document.getElementById('closeDashboardBtn').addEventListener('click',()=>dashboard.style.display='none');
+logIcon.addEventListener('click',()=>{logContainer.style.display=logContainer.style.display==='block'?'none':'block';});
+renderLogs();
+addGangBtn.addEventListener('click',()=>{gangForm.style.display='block';overlay.style.display='block';currentCard=null;});
+closeFormBtn.addEventListener('click',()=>{gangForm.style.display='none';overlay.style.display='none';});
+saveGangBtn.addEventListener('click',()=>{const name=document.getElementById('gangName').value;if(!name){alert('أدخل اسم العصابة'); return;}const boss=document.getElementById('bossName').value;const coBoss=document.getElementById('coBossName').value;const members=document.getElementById('members').value;const activity=document.getElementById('activity').value;const img=document.getElementById('imageUrl').value||'https://via.placeholder.com/250x120';if(currentCard){let g=gangs.find(g=>g.id===currentCard.dataset.id);g.name=name; g.boss=boss; g.coBoss=coBoss; g.members=members; g.activity=activity; g.img=img; currentCard.dataset.name=name; currentCard.dataset.boss=boss; currentCard.dataset.coBoss=coBoss; currentCard.dataset.members=members; currentCard.dataset.activity=activity; currentCard.dataset.img=img; currentCard.innerHTML=`<img src="${img}"><h2>${name}</h2>`; addLog(`تم تعديل العصابة ${name}`);} else {const id='id_'+Date.now(); const data={id,name,boss,coBoss,members,activity,img,notes:[]}; gangs.push(data); renderGang(data); addLog(`تم إضافة العصابة ${name}`);} saveGangs(); gangForm.style.display='none'; overlay.style.display='none';});
+addNoteBtn.addEventListener('click',()=>{const note=newNote.value.trim();if(!note) return;let notesArr=JSON.parse(currentCard.dataset.notes);notesArr.push(note);currentCard.dataset.notes=JSON.stringify(notesArr);let g=gangs.find(g=>g.id===currentCard.dataset.id); g.notes=notesArr; saveGangs(); openDashboard(currentCard); addLog(`تمت إضافة ملاحظة للعصابة ${currentCard.dataset.name}`); newNote.value='';});
+editBtn.addEventListener('click',()=>{gangForm.style.display='block'; overlay.style.display='block';document.getElementById('gangName').value=currentCard.dataset.name;document.getElementById('bossName').value=currentCard.dataset.boss;document.getElementById('coBossName').value=currentCard.dataset.coBoss;document.getElementById('members').value=currentCard.dataset.members;document.getElementById('activity').value=currentCard.dataset.activity;document.getElementById('imageUrl').value=currentCard.dataset.img;});
+deleteBtn.addEventListener('click',()=>{if(confirm('هل تريد حذف العصابة نهائيًا؟')){gangs=gangs.filter(g=>g.id!==currentCard.dataset.id);gangContainer.removeChild(currentCard);saveGangs();dashboard.style.display='none';addLog(`تم حذف العصابة ${currentCard.dataset.name}`);}});
+sendDiscordBtn.addEventListener('click',()=>{const webhook="https://discord.com/api/webhooks/1483551885477675180/eog_Ih8DVvhECdoagwm_g9H2PrcmBMb0Z3BBdQvKsEreztmOp2yCWaDFmTBAzjVD4sFg"; const content={username:"NORK Database",embeds:[{title:currentCard.dataset.name,color:0x9932CC,fields:[{name:"البوس",value:currentCard.dataset.boss},{name:"الكو-بوس",value:currentCard.dataset.coBoss},{name:"الأعضاء",value:currentCard.dataset.members},{name:"النشاط الحالي",value:currentCard.dataset.activity},{name:"الملاحظات",value:JSON.parse(currentCard.dataset.notes).join("\n") }]}]}; fetch(webhook,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(content)}).then(r=>alert('تم الإرسال للـ Discord')).catch(e=>alert('خطأ بالإرسال'));});
+searchIcon.addEventListener('click',()=>{searchInput.style.display=searchInput.style.display==='block'?'none':'block'; if(searchInput.style.display==='block') searchInput.focus();});
+searchInput.addEventListener('input',()=>{const q=searchInput.value.toLowerCase();document.querySelectorAll('.gang-card').forEach(card=>{card.style.display=(card.dataset.name.toLowerCase().includes(q)||card.dataset.boss.toLowerCase().includes(q)||card.dataset.activity.toLowerCase().includes(q))?'block':'none';});});
+gangs.forEach(renderGang);
+</script>
+<canvas id="effectCanvas"></canvas>
+<script>
+// ====== إعداد Canvas ======
+const canvas = document.getElementById('effectCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// نضع الكانفاس فوق كل شيء
+canvas.style.position = 'fixed';
+canvas.style.top = '0';
+canvas.style.left = '0';
+canvas.style.width = '100%';
+canvas.style.height = '100%';
+canvas.style.zIndex = '500'; // فوق جميع العناصر
+canvas.style.pointerEvents = 'none'; // لا يمنع الضغط على الأزرار
+
+// ====== إنشاء النقاط المتحركة ======
+const points = [];
+for (let i = 0; i < 100; i++) {
+    points.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 3 + 1,
+        vx: (Math.random() - 0.5) * 0.3, // سرعة خفيفة
+        vy: (Math.random() - 0.5) * 0.3,
+        color: `rgba(217,140,255,${Math.random()*0.7 + 0.3})`
+    });
+}
+
+// ====== موقع الماوس ======
+let mouse = { x: canvas.width/2, y: canvas.height/2 };
+window.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
+
+// ====== رسم النقاط والخطوط ======
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // تحديث موقع النقاط ورسمها
+    points.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // انعكاس عند حدود الشاشة
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+    });
+
+    // رسم خطوط بين النقاط القريبة
+    for (let i = 0; i < points.length; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+            const dx = points[i].x - points[j].x;
+            const dy = points[i].y - points[j].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 120) {
+                ctx.strokeStyle = `rgba(217,140,255,${1 - dist/120})`;
+                ctx.beginPath();
+                ctx.moveTo(points[i].x, points[i].y);
+                ctx.lineTo(points[j].x, points[j].y);
+                ctx.stroke();
+            }
+        }
+    }
+
+    // خطوط تتفاعل مع الماوس
+    points.forEach(p => {
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 150) {
+            ctx.strokeStyle = `rgba(255,192,255,${1 - dist/150})`;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.stroke();
+        }
+    });
+
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+<!-- Firebase App (core SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+
+<!-- Firebase Analytics -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcPD5ppqSvmm4LrzCfSnIaoswbnMPd1FI",
+    authDomain: "nork-437d9.firebaseapp.com",
+    databaseURL: "https://nork-437d9-default-rtdb.firebaseio.com",
+    projectId: "nork-437d9",
+    storageBucket: "nork-437d9.firebasestorage.app",
+    messagingSenderId: "462181721317",
+    appId: "1:462181721317:web:6278a455605aebd98a600c",
+    measurementId: "G-LW813WRZEQ"
+  };
+
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const analytics = firebase.analytics();
+</script>
+</body>
+</html>
